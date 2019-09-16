@@ -4,13 +4,15 @@ const router = express.Router();
 const User = require("./user-helpers");
 
 router.get("/users", (req, res) => {
-  User.find()
-    .then(users => {
+  const { username, password } = req.headers;
+
+  if (username && password) {
+    User.find().then(users => {
       res.status(200).json(users);
-    })
-    .catch(error => {
-      res.status(500).json("Server could not get users");
     });
+  } else {
+    res.status(401).json({ error: "You shall not pass" });
+  }
 });
 
 router.get("/users/:id", (req, res) => {
@@ -42,13 +44,14 @@ router.post("/register", (req, res) => {
 });
 
 router.post("/login", (req, res) => {
-  const { username, password } = req.body;
+  let { username, password } = req.body;
 
   User.findBy({ username })
     .then(user => {
-      const authenticate = bcrypt.compareSync(user.password, password);
+      const authenticate = bcrypt.compareSync(password, user.password);
 
-      if (authenticate) {
+      if (user && authenticate) {
+        console.log(authenticate);
         res.status(200).json({ message: `Welcome, ${user.username}` });
       } else {
         res.status(401).json({ error: "You shall not pass!" });
