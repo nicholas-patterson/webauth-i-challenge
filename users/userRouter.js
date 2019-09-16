@@ -6,13 +6,21 @@ const User = require("./user-helpers");
 router.get("/users", (req, res) => {
   const { username, password } = req.headers;
 
-  if (username && password) {
-    User.find().then(users => {
-      res.status(200).json(users);
+  User.findBy({ username })
+    .then(user => {
+      const authenticate = bcrypt.compareSync(password, user.password);
+
+      if (user && authenticate) {
+        User.find().then(users => {
+          res.status(200).json(users);
+        });
+      } else {
+        res.status(401).json({ error: "Shall not enter!" });
+      }
+    })
+    .catch(error => {
+      res.status(500).json({ error: "Server could not get list of users" });
     });
-  } else {
-    res.status(401).json({ error: "You shall not pass" });
-  }
 });
 
 router.get("/users/:id", (req, res) => {
