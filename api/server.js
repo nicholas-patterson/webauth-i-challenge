@@ -9,7 +9,7 @@ const sessionConfig = {
   name: "oreos",
   secret: "shh...dont say anything",
   cookie: {
-    maxAge: 1000 * 30,
+    maxAge: 1000 * 60 * 60,
     secure: false,
     httpOnly: true
   },

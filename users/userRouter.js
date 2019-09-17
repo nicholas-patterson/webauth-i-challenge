@@ -1,22 +1,13 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const restricted = require("../middleware/restricted");
 const router = express.Router();
 const User = require("./user-helpers");
 
-router.get("/users", (req, res) => {
-  const { username, password } = req.headers;
-
-  User.findBy({ username })
-    .then(user => {
-      const authenticate = bcrypt.compareSync(password, user.password);
-
-      if (user && authenticate) {
-        User.find().then(users => {
-          res.status(200).json(users);
-        });
-      } else {
-        res.status(401).json({ error: "Shall not enter!" });
-      }
+router.get("/users", restricted, (req, res) => {
+  User.find()
+    .then(users => {
+      res.status(200).json(users);
     })
     .catch(error => {
       res.status(500).json({ error: "Server could not get list of users" });
@@ -59,7 +50,7 @@ router.post("/login", (req, res) => {
       const authenticate = bcrypt.compareSync(password, user.password);
 
       if (user && authenticate) {
-        console.log(authenticate);
+        req.session.user = user;
         res.status(200).json({ message: `Welcome, ${user.username}` });
       } else {
         res.status(401).json({ error: "You shall not pass!" });
@@ -68,6 +59,20 @@ router.post("/login", (req, res) => {
     .catch(error => {
       res.status(500).json({ error: "Server could not login user" });
     });
+});
+
+router.get("/logout", (req, res) => {
+  if (req.session) {
+    req.session.destroy(error => {
+      if (error) {
+        res.status(500).json({ Error: "Server could not log you out" });
+      } else {
+        res.status(200).json({ error: "See ya later !" });
+      }
+    });
+  } else {
+    res.status(200).json({ message: "Your already out of here" });
+  }
 });
 
 module.exports = router;
